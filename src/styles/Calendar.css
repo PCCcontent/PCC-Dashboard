@@ -1,0 +1,116 @@
+.calendar-container {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.calendar-header h1 {
+  font-size: 32px;
+  color: #333;
+}
+
+.posts-list {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.posts-list h2 {
+  margin-bottom: 20px;
+  color: #667eea;
+}
+
+.posts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.posts-table thead {
+  background-color: #f0f0f0;
+}
+
+.posts-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #ddd;
+}
+
+.posts-table td {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.posts-table tbody tr:hover {
+  background-color: #f9f9f9;
+  transition: background 0.2s ease;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: #333;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.form-card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  border-left: 5px solid #667eea;
+}
+
+.form-card h2 {
+  margin-bottom: 20px;
+  color: #667eea;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .posts-table {
+    font-size: 12px;
+  }
+
+  .posts-table th,
+  .posts-table td {
+    padding: 8px;
+  }
+}
