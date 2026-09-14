@@ -15,7 +15,7 @@ function LoginPage() {
     setLoading(true);
 
     // Hardcoded admin credentials
-    if (email === 'admin@clinic.com' && password === 'admin') {
+    if (email === 'admin@clinic.com' && password === 'ClinicAdmin123') {
       localStorage.setItem('currentUser', JSON.stringify({
         uid: 'admin-001',
         email: 'admin@clinic.com',
@@ -68,7 +68,7 @@ function LoginPage() {
 
         <div className="auth-footer">
           <p style={{ fontSize: '0.9em', color: '#999' }}>
-            Demo: admin@clinic.com / admin
+            Demo: admin@clinic.com / ClinicAdmin123
           </p>
         </div>
       </div>
