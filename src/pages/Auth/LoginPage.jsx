@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { loginUser } from '../../services/auth.service';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/Auth.css';
 
 function LoginPage() {
@@ -15,14 +14,20 @@ function LoginPage() {
     setError('');
     setLoading(true);
 
-    try {
-      await loginUser(email, password);
+    // Hardcoded admin credentials
+    if (email === 'admin@clinic.com' && password === 'admin') {
+      localStorage.setItem('currentUser', JSON.stringify({
+        uid: 'admin-001',
+        email: 'admin@clinic.com',
+        name: 'Admin',
+        role: 'admin',
+      }));
       navigate('/');
-    } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
+    } else {
+      setError('Invalid email or password');
     }
+
+    setLoading(false);
   };
 
   return (
@@ -62,7 +67,9 @@ function LoginPage() {
         </form>
 
         <div className="auth-footer">
-          <p>Contact your admin to create an account</p>
+          <p style={{ fontSize: '0.9em', color: '#999' }}>
+            Demo: admin@clinic.com / admin
+          </p>
         </div>
       </div>
     </div>

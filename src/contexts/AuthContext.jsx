@@ -1,5 +1,4 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { setupAuthStateListener, getCurrentUserProfile } from '../services/auth.service';
 
 export const AuthContext = createContext();
 
@@ -11,22 +10,20 @@ export const AuthProvider = ({ children }) => {
   const [teamId, setTeamId] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = setupAuthStateListener(async (authData) => {
-      if (authData) {
-        setCurrentUser(authData.firebaseUser);
-        setUserProfile(authData.profile);
-        setUserRole(authData.profile?.role);
-        setTeamId(authData.profile?.teamId);
-      } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        setUserRole(null);
-        setTeamId(null);
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        setUserProfile(user);
+        setUserRole(user.role);
+        setTeamId(user.teamId || 'default-team');
+      } catch (err) {
+        console.error('Error parsing stored user:', err);
       }
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    }
+    setLoading(false);
   }, []);
 
   const value = {

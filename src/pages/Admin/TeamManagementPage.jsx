@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { getTeamMembers, createMemberAccount } from '../../services/auth.service';
+import { db } from '../../firebase';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import '../../styles/TeamManagement.css';
 
 function TeamManagementPage() {
@@ -14,39 +15,33 @@ function TeamManagementPage() {
   });
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [createdPassword, setCreatedPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     if (userRole !== 'admin') return;
-
-    const loadMembers = async () => {
-      try {
-        const teamMembers = await getTeamMembers(teamId);
-        setMembers(teamMembers);
-      } catch (err) {
-        console.error('Error loading members:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadMembers();
   }, [teamId, userRole]);
 
-  // Generate random password
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let password = '';
-    for (let i = 0; i < 10; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+  const loadMembers = async () => {
+    try {
+      const q = query(collection(db, 'team_members'), where('teamId', '==', teamId || 'default-team'));
+      const snapshot = await getDocs(q);
+      const membersList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMembers(membersList);
+    } catch (err) {
+      console.error('Error loading members:', err);
+    } finally {
+      setLoading(false);
     }
-    return password;
   };
 
   const handleCreateMember = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
 
     if (!formData.name || !formData.email) {
       setError('Name and email are required');
@@ -54,29 +49,31 @@ function TeamManagementPage() {
     }
 
     setCreating(true);
-    const generatedPassword = generatePassword();
 
     try {
-      await createMemberAccount(formData.email, generatedPassword, formData.name, teamId);
-      setCreatedPassword(generatedPassword);
-      setShowPassword(true);
+      // Add member to Firestore
+      await addDoc(collection(db, 'team_members'), {
+        name: formData.name,
+        email: formData.email,
+        role: 'member',
+        status: 'active',
+        teamId: teamId || 'default-team',
+        createdAt: new Date(),
+      });
+
+      setSuccessMsg(`✓ ${formData.name} added to team!`);
       setFormData({ name: '', email: '' });
 
-      // Reload members after a short delay
-      setTimeout(async () => {
-        const teamMembers = await getTeamMembers(teamId);
-        setMembers(teamMembers);
-      }, 1000);
+      // Reload members
+      await loadMembers();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      setError(err.message || 'Failed to create member account');
+      setError(err.message || 'Failed to add member');
     } finally {
       setCreating(false);
     }
-  };
-
-  const handleCopyPassword = () => {
-    navigator.clipboard.writeText(createdPassword);
-    alert('Password copied to clipboard!');
   };
 
   if (userRole !== 'admin') {
@@ -91,7 +88,8 @@ function TeamManagementPage() {
           className="btn-primary"
           onClick={() => {
             setShowForm(!showForm);
-            setShowPassword(false);
+            setError('');
+            setSuccessMsg('');
           }}
         >
           {showForm ? 'Cancel' : '+ Add Member'}
@@ -100,64 +98,37 @@ function TeamManagementPage() {
 
       {showForm && (
         <div className="create-form-section">
-          <h3>Create New Member Account</h3>
+          <h3>Add Team Member</h3>
           {error && <div className="error-message">{error}</div>}
+          {successMsg && <div className="success-message">{successMsg}</div>}
 
-          {showPassword ? (
-            <div className="password-display">
-              <p><strong>✓ Account created successfully!</strong></p>
-              <p>Share this temporary password with the team member:</p>
-              <div className="password-box">
-                <code>{createdPassword}</code>
-                <button type="button" className="btn-secondary" onClick={handleCopyPassword}>
-                  📋 Copy
-                </button>
-              </div>
-              <p style={{ fontSize: '0.9em', color: '#666' }}>
-                They can change their password after logging in.
-              </p>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => {
-                  setShowPassword(false);
-                  setShowForm(false);
-                }}
-              >
-                Done
-              </button>
+          <form onSubmit={handleCreateMember}>
+            <div className="form-group">
+              <label>Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Team member name"
+                required
+              />
             </div>
-          ) : (
-            <form onSubmit={handleCreateMember}>
-              <div className="form-group">
-                <label>Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Team member name"
-                />
-              </div>
 
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="member@clinic.com"
-                />
-              </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="member@clinic.com"
+                required
+              />
+            </div>
 
-              <p style={{ fontSize: '0.9em', color: '#666', marginTop: '10px' }}>
-                A secure password will be generated automatically.
-              </p>
-
-              <button type="submit" className="btn-primary" disabled={creating}>
-                {creating ? 'Creating...' : 'Create Member'}
-              </button>
-            </form>
-          )}
+            <button type="submit" className="btn-primary" disabled={creating}>
+              {creating ? 'Adding...' : 'Add Member'}
+            </button>
+          </form>
         </div>
       )}
 
