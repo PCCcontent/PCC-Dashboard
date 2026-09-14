@@ -6,7 +6,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Auth Pages
 import LoginPage from './pages/Auth/LoginPage';
-import SignupPage from './pages/Auth/SignupPage';
 
 // Main Pages
 import PersonalDashboard from './pages/PersonalDashboard';
@@ -25,12 +24,11 @@ function AppContent() {
     return <div className="loading">Loading...</div>;
   }
 
-  // Show login/signup if not authenticated
+  // Show login if not authenticated
   if (!currentUser) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

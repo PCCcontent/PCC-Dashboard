@@ -62,7 +62,7 @@ function LoginPage() {
         </form>
 
         <div className="auth-footer">
-          <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
+          <p>Contact your admin to create an account</p>
         </div>
       </div>
     </div>

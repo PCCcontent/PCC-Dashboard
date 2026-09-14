@@ -11,10 +11,11 @@ function TeamManagementPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
   });
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [createdPassword, setCreatedPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (userRole !== 'admin') return;
@@ -33,35 +34,49 @@ function TeamManagementPage() {
     loadMembers();
   }, [teamId, userRole]);
 
+  // Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleCreateMember = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setError('All fields are required');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!formData.name || !formData.email) {
+      setError('Name and email are required');
       return;
     }
 
     setCreating(true);
+    const generatedPassword = generatePassword();
 
     try {
-      await createMemberAccount(formData.email, formData.password, formData.name, teamId);
-      setFormData({ name: '', email: '', password: '' });
-      setShowForm(false);
+      await createMemberAccount(formData.email, generatedPassword, formData.name, teamId);
+      setCreatedPassword(generatedPassword);
+      setShowPassword(true);
+      setFormData({ name: '', email: '' });
 
-      // Reload members
-      const teamMembers = await getTeamMembers(teamId);
-      setMembers(teamMembers);
+      // Reload members after a short delay
+      setTimeout(async () => {
+        const teamMembers = await getTeamMembers(teamId);
+        setMembers(teamMembers);
+      }, 1000);
     } catch (err) {
       setError(err.message || 'Failed to create member account');
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(createdPassword);
+    alert('Password copied to clipboard!');
   };
 
   if (userRole !== 'admin') {
@@ -74,7 +89,10 @@ function TeamManagementPage() {
         <h1>Team Management</h1>
         <button
           className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            setShowPassword(false);
+          }}
         >
           {showForm ? 'Cancel' : '+ Add Member'}
         </button>
@@ -85,41 +103,61 @@ function TeamManagementPage() {
           <h3>Create New Member Account</h3>
           {error && <div className="error-message">{error}</div>}
 
-          <form onSubmit={handleCreateMember}>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Member name"
-              />
+          {showPassword ? (
+            <div className="password-display">
+              <p><strong>✓ Account created successfully!</strong></p>
+              <p>Share this temporary password with the team member:</p>
+              <div className="password-box">
+                <code>{createdPassword}</code>
+                <button type="button" className="btn-secondary" onClick={handleCopyPassword}>
+                  📋 Copy
+                </button>
+              </div>
+              <p style={{ fontSize: '0.9em', color: '#666' }}>
+                They can change their password after logging in.
+              </p>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setShowPassword(false);
+                  setShowForm(false);
+                }}
+              >
+                Done
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleCreateMember}>
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Team member name"
+                />
+              </div>
 
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="member@example.com"
-              />
-            </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="member@clinic.com"
+                />
+              </div>
 
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Set password"
-              />
-            </div>
+              <p style={{ fontSize: '0.9em', color: '#666', marginTop: '10px' }}>
+                A secure password will be generated automatically.
+              </p>
 
-            <button type="submit" className="btn-primary" disabled={creating}>
-              {creating ? 'Creating...' : 'Create Member'}
-            </button>
-          </form>
+              <button type="submit" className="btn-primary" disabled={creating}>
+                {creating ? 'Creating...' : 'Create Member'}
+              </button>
+            </form>
+          )}
         </div>
       )}
 
