@@ -22,12 +22,12 @@ function LoginPage() {
         name: 'Admin',
         role: 'admin',
       }));
-      navigate('/');
+      // Full page reload to update AuthContext
+      window.location.href = '/';
     } else {
       setError('Invalid email or password');
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
