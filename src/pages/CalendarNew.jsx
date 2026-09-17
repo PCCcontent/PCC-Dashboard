@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { createPost, updatePost, deletePost, getTeamPosts } from '../services/firestore.service';
+import { getDocs, query, collection, where } from 'firebase/firestore';
+import { db } from '../firebase';
 import '../styles/CalendarNew.css';
 
 const STATUSES = [
@@ -29,20 +33,10 @@ const STATUS_SECTIONS = {
 };
 
 function CalendarNew() {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      date: '2026-10-05',
-      platform: 'Instagram',
-      contentType: '1-min Video',
-      caption: 'Sample educational post about health and wellness tips for better living',
-      videoFileName: 'video_001.mp4',
-      videoLink: 'https://example.com/video_001.mp4',
-      status: 'Posted',
-      assignedTo: 'John Doe',
-      notes: 'Performed well'
-    }
-  ]);
+  const { userProfile, teamId } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -60,6 +54,34 @@ function CalendarNew() {
 
   const [copiedId, setCopiedId] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date(2026, 9)); // October 2026
+
+  // Load team members and posts
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load team members
+        const q = query(collection(db, 'team_members'), where('teamId', '==', teamId || 'default-team'));
+        const snapshot = await getDocs(q);
+        const members = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setTeamMembers(members);
+
+        // Load posts
+        const teamPosts = await getTeamPosts(teamId || 'default-team');
+        setPosts(teamPosts);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (teamId) {
+      loadData();
+    }
+  }, [teamId]);
 
   const handleCopyCaption = (caption, id) => {
     navigator.clipboard.writeText(caption);
@@ -83,20 +105,35 @@ function CalendarNew() {
     });
   };
 
-  const handleSavePost = () => {
+  const handleSavePost = async () => {
     if (!formData.date || !formData.caption) {
       alert('Please fill in Date and Caption');
       return;
     }
 
-    if (editingId) {
-      setPosts(posts.map(p => p.id === editingId ? { ...formData, id: editingId } : p));
-      setEditingId(null);
-    } else {
-      setPosts([...posts, { ...formData, id: Date.now() }]);
+    try {
+      if (editingId) {
+        // Update existing post
+        await updatePost(editingId, {
+          ...formData,
+          scheduledDate: new Date(formData.date),
+          createdBy: userProfile?.uid || 'admin-001',
+        });
+        const updatedPosts = posts.map(p => p.id === editingId ? { ...formData, id: editingId } : p);
+        setPosts(updatedPosts);
+      } else {
+        // Create new post
+        const postId = await createPost(teamId || 'default-team', {
+          ...formData,
+          scheduledDate: new Date(formData.date),
+          createdBy: userProfile?.uid || 'admin-001',
+        });
+        setPosts([...posts, { ...formData, id: postId }]);
+      }
+      setShowForm(false);
+    } catch (err) {
+      alert('Error saving post: ' + err.message);
     }
-
-    setShowForm(false);
   };
 
   const handleEditPost = (post) => {
@@ -105,9 +142,14 @@ function CalendarNew() {
     setShowForm(true);
   };
 
-  const handleDeletePost = (id) => {
+  const handleDeletePost = async (id) => {
     if (window.confirm('Delete this post?')) {
-      setPosts(posts.filter(p => p.id !== id));
+      try {
+        await deletePost(id);
+        setPosts(posts.filter(p => p.id !== id));
+      } catch (err) {
+        alert('Error deleting post: ' + err.message);
+      }
     }
   };
 
@@ -213,13 +255,14 @@ function CalendarNew() {
             <select name="status" value={formData.status} onChange={handleInputChange}>
               {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <input
-              type="text"
-              name="assignedTo"
-              value={formData.assignedTo}
-              onChange={handleInputChange}
-              placeholder="Assigned To"
-            />
+            <select name="assignedTo" value={formData.assignedTo} onChange={handleInputChange}>
+              <option value="">-- Assign to Member --</option>
+              {teamMembers.map(member => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
             <textarea
               name="notes"
               value={formData.notes}
