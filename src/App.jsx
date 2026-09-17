@@ -14,6 +14,7 @@ import Planning from './pages/Planning';
 import AnalyticsNew from './pages/AnalyticsNew';
 import Settings from './pages/Settings';
 import TeamManagementPage from './pages/Admin/TeamManagementPage';
+import TeamDashboard from './pages/TeamDashboard';
 
 import './App.css';
 
@@ -46,6 +47,7 @@ function AppContent() {
           <li><Link to="/calendar">📅 Calendar</Link></li>
           <li><Link to="/planning">📋 Planning</Link></li>
           <li><Link to="/analytics">📈 Analytics</Link></li>
+          {userRole === 'admin' && <li><Link to="/team-dashboard">👥 Team Members</Link></li>}
           {userRole === 'admin' && <li><Link to="/admin/team">👥 Team</Link></li>}
           <li><Link to="/settings">⚙️ Settings</Link></li>
         </ul>
@@ -62,6 +64,7 @@ function AppContent() {
           <Route path="/planning" element={<ProtectedRoute><Planning /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><AnalyticsNew /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/team-dashboard" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
           <Route path="/admin/team" element={<ProtectedRoute><TeamManagementPage /></ProtectedRoute>} />
         </Routes>
       </main>

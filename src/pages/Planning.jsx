@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import '../styles/Planning.css';
 
 function Planning() {
+  const { userProfile, teamId } = useAuth();
   const [monthlyStrategy, setMonthlyStrategy] = useState({
     month: 'October',
     year: 2026,
@@ -10,69 +14,165 @@ function Planning() {
     keyDates: 'Oct 5: World Mental Health Day, Oct 10: Launch campaign'
   });
 
-  const [ideas, setIdeas] = useState([
-    {
-      id: 1,
-      title: 'Tips for better sleep',
-      category: 'Video Idea',
-      suggestedBy: 'Maria',
-      status: 'Approved',
-      targetMonth: 'October'
-    },
-    {
-      id: 2,
-      title: 'Meet the team - Dr. John',
-      category: 'Video Idea',
-      suggestedBy: 'Team',
-      status: 'Idea',
-      targetMonth: 'October'
-    }
-  ]);
-
-  const [teamMembers] = useState([
-    { name: 'Maria', availability: 'Available Mon-Wed' },
-    { name: 'John', availability: 'Available Thu-Fri' },
-    { name: 'Sarah', availability: 'Available all week' }
-  ]);
-
+  const [ideas, setIdeas] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingStrategy, setEditingStrategy] = useState(false);
+  const [editingIdeaId, setEditingIdeaId] = useState(null);
+  const [error, setError] = useState('');
+
+  const PLATFORMS = ['Instagram', 'Facebook'];
+  const CONTENT_TYPES = ['1-min Video', '10-30sec Video', 'Static Post'];
+
   const [newIdea, setNewIdea] = useState({
     title: '',
     category: 'Video Idea',
     suggestedBy: '',
     status: 'Idea',
-    targetMonth: 'October'
+    targetMonth: 'October',
+    platform: 'Instagram',
+    contentType: '1-min Video',
+    assignedTo: ''
   });
+
+  // Load team members and ideas
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load team members
+        const q = query(collection(db, 'team_members'), where('teamId', '==', teamId || 'default-team'));
+        const snapshot = await getDocs(q);
+        const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTeamMembers(members);
+
+        // Load ideas
+        const ideasQ = query(collection(db, 'ideas'), where('teamId', '==', teamId || 'default-team'));
+        const ideasSnapshot = await getDocs(ideasQ);
+        const ideasList = ideasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIdeas(ideasList);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [teamId]);
 
   const handleSaveStrategy = () => {
     setEditingStrategy(false);
-    alert('Monthly strategy saved!');
+    // Strategy is stored locally for now
   };
 
-  const handleAddIdea = () => {
+  const handleAddIdea = async () => {
+    setError('');
     if (!newIdea.title || !newIdea.suggestedBy) {
-      alert('Please fill in title and suggested by');
+      setError('Please fill in title and suggested by');
       return;
     }
-    setIdeas([...ideas, { ...newIdea, id: Date.now() }]);
-    setNewIdea({
-      title: '',
-      category: 'Video Idea',
-      suggestedBy: '',
-      status: 'Idea',
-      targetMonth: 'October'
-    });
-  };
 
-  const handleDeleteIdea = (id) => {
-    if (window.confirm('Delete this idea?')) {
-      setIdeas(ideas.filter(i => i.id !== id));
+    try {
+      await addDoc(collection(db, 'ideas'), {
+        title: newIdea.title,
+        category: newIdea.category,
+        suggestedBy: newIdea.suggestedBy,
+        status: newIdea.status,
+        targetMonth: newIdea.targetMonth,
+        platform: newIdea.platform,
+        contentType: newIdea.contentType,
+        assignedTo: newIdea.assignedTo,
+        teamId: teamId || 'default-team',
+        createdAt: new Date(),
+      });
+
+      setNewIdea({
+        title: '',
+        category: 'Video Idea',
+        suggestedBy: '',
+        status: 'Idea',
+        targetMonth: 'October',
+        platform: 'Instagram',
+        contentType: '1-min Video',
+        assignedTo: ''
+      });
+
+      // Reload ideas
+      const ideasQ = query(collection(db, 'ideas'), where('teamId', '==', teamId || 'default-team'));
+      const ideasSnapshot = await getDocs(ideasQ);
+      const ideasList = ideasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setIdeas(ideasList);
+    } catch (err) {
+      setError('Failed to add idea: ' + err.message);
     }
   };
+
+  const handleEditIdea = (idea) => {
+    setNewIdea(idea);
+    setEditingIdeaId(idea.id);
+  };
+
+  const handleUpdateIdea = async () => {
+    setError('');
+    if (!newIdea.title || !newIdea.suggestedBy) {
+      setError('Please fill in title and suggested by');
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'ideas', editingIdeaId), {
+        title: newIdea.title,
+        category: newIdea.category,
+        suggestedBy: newIdea.suggestedBy,
+        status: newIdea.status,
+        targetMonth: newIdea.targetMonth,
+        platform: newIdea.platform,
+        contentType: newIdea.contentType,
+        assignedTo: newIdea.assignedTo,
+      });
+
+      setEditingIdeaId(null);
+      setNewIdea({
+        title: '',
+        category: 'Video Idea',
+        suggestedBy: '',
+        status: 'Idea',
+        targetMonth: 'October',
+        platform: 'Instagram',
+        contentType: '1-min Video',
+        assignedTo: ''
+      });
+
+      // Reload ideas
+      const ideasQ = query(collection(db, 'ideas'), where('teamId', '==', teamId || 'default-team'));
+      const ideasSnapshot = await getDocs(ideasQ);
+      const ideasList = ideasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setIdeas(ideasList);
+    } catch (err) {
+      setError('Failed to update idea: ' + err.message);
+    }
+  };
+
+  const handleDeleteIdea = async (id) => {
+    if (window.confirm('Delete this idea?')) {
+      try {
+        await deleteDoc(doc(db, 'ideas', id));
+        setIdeas(ideas.filter(i => i.id !== id));
+      } catch (err) {
+        setError('Failed to delete idea: ' + err.message);
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="planning-container"><p>Loading...</p></div>;
+  }
 
   return (
     <div className="planning-container">
-      <h1>Planning & Strategy</h1>
+      <h1>📋 Planning & Strategy</h1>
+      {error && <div className="error-message">{error}</div>}
 
       {/* Monthly Strategy Section */}
       <div className="strategy-card">
@@ -136,7 +236,7 @@ function Planning() {
         <h2>💡 Content Ideas Bank</h2>
 
         <div className="idea-form">
-          <h3>Submit New Idea</h3>
+          <h3>{editingIdeaId ? 'Edit Idea' : 'Submit New Idea'}</h3>
           <div className="form-grid">
             <input
               type="text"
@@ -166,8 +266,61 @@ function Planning() {
               <option>November</option>
               <option>December</option>
             </select>
+            <select
+              value={newIdea.platform}
+              onChange={(e) => setNewIdea({ ...newIdea, platform: e.target.value })}
+            >
+              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select
+              value={newIdea.contentType}
+              onChange={(e) => setNewIdea({ ...newIdea, contentType: e.target.value })}
+            >
+              {CONTENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <select
+              value={newIdea.assignedTo}
+              onChange={(e) => setNewIdea({ ...newIdea, assignedTo: e.target.value })}
+            >
+              <option value="">-- Assign to Member --</option>
+              {teamMembers.map(member => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={newIdea.status}
+              onChange={(e) => setNewIdea({ ...newIdea, status: e.target.value })}
+            >
+              <option>Idea</option>
+              <option>Approved</option>
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select>
           </div>
-          <button className="btn-primary" onClick={handleAddIdea}>Add Idea</button>
+          <div className="form-actions">
+            {editingIdeaId ? (
+              <>
+                <button className="btn-primary" onClick={handleUpdateIdea}>Update Idea</button>
+                <button className="btn-secondary" onClick={() => {
+                  setEditingIdeaId(null);
+                  setNewIdea({
+                    title: '',
+                    category: 'Video Idea',
+                    suggestedBy: '',
+                    status: 'Idea',
+                    targetMonth: 'October',
+                    platform: 'Instagram',
+                    contentType: '1-min Video',
+                    assignedTo: ''
+                  });
+                }}>Cancel</button>
+              </>
+            ) : (
+              <button className="btn-primary" onClick={handleAddIdea}>Add Idea</button>
+            )}
+          </div>
         </div>
 
         <div className="ideas-list">
@@ -175,36 +328,38 @@ function Planning() {
           {ideas.length === 0 ? (
             <p>No ideas yet. Be the first to suggest one!</p>
           ) : (
-            <table className="ideas-table">
-              <thead>
-                <tr>
-                  <th>Idea</th>
-                  <th>Category</th>
-                  <th>Suggested By</th>
-                  <th>Target Month</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ideas.map(idea => (
-                  <tr key={idea.id}>
-                    <td>{idea.title}</td>
-                    <td>{idea.category}</td>
-                    <td>{idea.suggestedBy}</td>
-                    <td>{idea.targetMonth}</td>
-                    <td>
+            <div className="ideas-cards">
+              {ideas.map(idea => {
+                const assignedMember = teamMembers.find(m => m.id === idea.assignedTo);
+                return (
+                  <div key={idea.id} className="idea-card">
+                    <div className="idea-header">
+                      <h4>{idea.title}</h4>
                       <span className={`status-tag ${idea.status.toLowerCase()}`}>
                         {idea.status}
                       </span>
-                    </td>
-                    <td>
+                    </div>
+                    <div className="idea-meta">
+                      <span className="badge">{idea.category}</span>
+                      <span className="badge">{idea.platform}</span>
+                      <span className="badge">{idea.contentType}</span>
+                    </div>
+                    <p className="idea-details">
+                      <strong>By:</strong> {idea.suggestedBy} | <strong>Month:</strong> {idea.targetMonth}
+                    </p>
+                    {assignedMember && (
+                      <p className="idea-assigned">
+                        <strong>Assigned to:</strong> {assignedMember.name}
+                      </p>
+                    )}
+                    <div className="idea-actions">
+                      <button className="btn-edit" onClick={() => handleEditIdea(idea)}>Edit</button>
                       <button className="btn-delete" onClick={() => handleDeleteIdea(idea.id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
