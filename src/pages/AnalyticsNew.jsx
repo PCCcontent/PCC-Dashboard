@@ -7,57 +7,73 @@ function AnalyticsNew() {
       id: 1,
       postDate: '2026-10-05',
       platform: 'Instagram',
-      contentType: '1-min Video',
-      views: 1234,
-      engagement: 45,
+      contentType: 'Reels',
+      totalViews: 1234,
+      followersViews: 750,
+      nonFollowersViews: 484,
+      interactionRate: 45,
+      followersInteraction: 28,
+      nonFollowersInteraction: 17,
       likes: 30,
       comments: 8,
-      shares: 5,
-      followers_growth: 12
+      shares: 5
     },
     {
       id: 2,
       postDate: '2026-10-08',
       platform: 'Facebook',
       contentType: 'Static Post',
-      views: 890,
-      engagement: 28,
+      totalViews: 890,
+      followersViews: 600,
+      nonFollowersViews: 290,
+      interactionRate: 28,
+      followersInteraction: 18,
+      nonFollowersInteraction: 10,
       likes: 20,
       comments: 5,
-      shares: 3,
-      followers_growth: 5
+      shares: 3
     },
     {
       id: 3,
       postDate: '2026-10-10',
       platform: 'Instagram',
-      contentType: '10-30sec Video',
-      views: 2100,
-      engagement: 68,
+      contentType: 'Short Reels',
+      totalViews: 2100,
+      followersViews: 1260,
+      nonFollowersViews: 840,
+      interactionRate: 68,
+      followersInteraction: 45,
+      nonFollowersInteraction: 23,
       likes: 45,
       comments: 15,
-      shares: 8,
-      followers_growth: 20
+      shares: 8
     }
   ]);
 
   const [newMetric, setNewMetric] = useState({
     postDate: '',
     platform: 'Instagram',
-    contentType: '1-min Video',
-    views: '',
-    engagement: '',
+    contentType: 'Reels',
+    totalViews: '',
+    followersViews: '',
+    nonFollowersViews: '',
+    interactionRate: '',
+    followersInteraction: '',
+    nonFollowersInteraction: '',
     likes: '',
     comments: '',
-    shares: '',
-    followers_growth: ''
+    shares: ''
   });
 
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterContentType, setFilterContentType] = useState('');
   const [editingId, setEditingId] = useState(null);
 
+  const CONTENT_TYPES = ['KOL', 'Reels', 'Short Reels', 'Static Post'];
+
   const handleAddMetric = () => {
-    if (!newMetric.postDate || !newMetric.views) {
-      alert('Please fill in Post Date and Views');
+    if (!newMetric.postDate || !newMetric.totalViews) {
+      alert('Please fill in Post Date and Total Views');
       return;
     }
     if (editingId) {
@@ -71,13 +87,16 @@ function AnalyticsNew() {
     setNewMetric({
       postDate: '',
       platform: 'Instagram',
-      contentType: '1-min Video',
-      views: '',
-      engagement: '',
+      contentType: 'Reels',
+      totalViews: '',
+      followersViews: '',
+      nonFollowersViews: '',
+      interactionRate: '',
+      followersInteraction: '',
+      nonFollowersInteraction: '',
       likes: '',
       comments: '',
-      shares: '',
-      followers_growth: ''
+      shares: ''
     });
   };
 
@@ -98,13 +117,16 @@ function AnalyticsNew() {
     setNewMetric({
       postDate: '',
       platform: 'Instagram',
-      contentType: '1-min Video',
-      views: '',
-      engagement: '',
+      contentType: 'Reels',
+      totalViews: '',
+      followersViews: '',
+      nonFollowersViews: '',
+      interactionRate: '',
+      followersInteraction: '',
+      nonFollowersInteraction: '',
       likes: '',
       comments: '',
-      shares: '',
-      followers_growth: ''
+      shares: ''
     });
   };
 
@@ -113,44 +135,55 @@ function AnalyticsNew() {
     setNewMetric(prev => ({ ...prev, [name]: value }));
   };
 
-  const calculateStats = () => {
-    if (metrics.length === 0) return {};
-    const totalViews = metrics.reduce((sum, m) => sum + parseInt(m.views || 0), 0);
-    const avgEngagement = (metrics.reduce((sum, m) => sum + parseInt(m.engagement || 0), 0) / metrics.length).toFixed(1);
-    const totalFollowerGrowth = metrics.reduce((sum, m) => sum + parseInt(m.followers_growth || 0), 0);
-    const avgViews = (totalViews / metrics.length).toFixed(0);
+  const getFilteredMetrics = () => {
+    return metrics.filter(m => {
+      const month = m.postDate.slice(0, 7); // YYYY-MM format
+      const monthMatch = !filterMonth || month === filterMonth;
+      const typeMatch = !filterContentType || m.contentType === filterContentType;
+      return monthMatch && typeMatch;
+    });
+  };
 
-    return { totalViews, avgEngagement, totalFollowerGrowth, postCount: metrics.length, avgViews };
+  const calculateStats = () => {
+    const filtered = getFilteredMetrics();
+    if (filtered.length === 0) return {};
+    const totalViews = filtered.reduce((sum, m) => sum + parseInt(m.totalViews || 0), 0);
+    const avgInteractionRate = (filtered.reduce((sum, m) => sum + parseInt(m.interactionRate || 0), 0) / filtered.length).toFixed(1);
+    const avgViews = (totalViews / filtered.length).toFixed(0);
+
+    return { totalViews, avgInteractionRate, postCount: filtered.length, avgViews };
   };
 
   const getMetricsByType = () => {
+    const filtered = getFilteredMetrics();
     const types = {};
-    metrics.forEach(m => {
-      if (!types[m.contentType]) types[m.contentType] = { count: 0, totalViews: 0, totalEngagement: 0 };
+    filtered.forEach(m => {
+      if (!types[m.contentType]) types[m.contentType] = { count: 0, totalViews: 0, totalInteraction: 0 };
       types[m.contentType].count++;
-      types[m.contentType].totalViews += parseInt(m.views || 0);
-      types[m.contentType].totalEngagement += parseInt(m.engagement || 0);
+      types[m.contentType].totalViews += parseInt(m.totalViews || 0);
+      types[m.contentType].totalInteraction += parseInt(m.interactionRate || 0);
     });
     return Object.entries(types).map(([type, data]) => ({
       type,
       avgViews: (data.totalViews / data.count).toFixed(0),
-      avgEngagement: (data.totalEngagement / data.count).toFixed(1),
+      avgInteraction: (data.totalInteraction / data.count).toFixed(1),
       count: data.count
     }));
   };
 
   const getMetricsByPlatform = () => {
+    const filtered = getFilteredMetrics();
     const platforms = {};
-    metrics.forEach(m => {
-      if (!platforms[m.platform]) platforms[m.platform] = { count: 0, totalViews: 0, totalEngagement: 0 };
+    filtered.forEach(m => {
+      if (!platforms[m.platform]) platforms[m.platform] = { count: 0, totalViews: 0, totalInteraction: 0 };
       platforms[m.platform].count++;
-      platforms[m.platform].totalViews += parseInt(m.views || 0);
-      platforms[m.platform].totalEngagement += parseInt(m.engagement || 0);
+      platforms[m.platform].totalViews += parseInt(m.totalViews || 0);
+      platforms[m.platform].totalInteraction += parseInt(m.interactionRate || 0);
     });
     return Object.entries(platforms).map(([platform, data]) => ({
       platform,
       avgViews: (data.totalViews / data.count).toFixed(0),
-      avgEngagement: (data.totalEngagement / data.count).toFixed(1),
+      avgInteraction: (data.totalInteraction / data.count).toFixed(1),
       count: data.count
     }));
   };
@@ -162,6 +195,35 @@ function AnalyticsNew() {
   return (
     <div className="analytics-new-container">
       <h1>📊 Analytics Dashboard</h1>
+
+      {/* Filters */}
+      <div className="filters-card">
+        <div className="filters-group">
+          <div className="filter-item">
+            <label>Filter by Month:</label>
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+            />
+            {filterMonth && (
+              <button className="btn-clear" onClick={() => setFilterMonth('')}>Clear</button>
+            )}
+          </div>
+          <div className="filter-item">
+            <label>Filter by Content Type:</label>
+            <select
+              value={filterContentType}
+              onChange={(e) => setFilterContentType(e.target.value)}
+            >
+              <option value="">All Types</option>
+              {CONTENT_TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Summary Stats */}
       <div className="stats-grid">
@@ -176,19 +238,14 @@ function AnalyticsNew() {
           <p className="stat-label">Per post</p>
         </div>
         <div className="stat-card">
-          <h3>Avg Engagement</h3>
-          <p className="stat-value">{stats.avgEngagement || 0}%</p>
+          <h3>Avg Interaction</h3>
+          <p className="stat-value">{stats.avgInteractionRate || 0}%</p>
           <p className="stat-label">Per post</p>
         </div>
         <div className="stat-card">
           <h3>Total Posts</h3>
           <p className="stat-value">{stats.postCount || 0}</p>
-          <p className="stat-label">This month</p>
-        </div>
-        <div className="stat-card">
-          <h3>Follower Growth</h3>
-          <p className="stat-value">+{stats.totalFollowerGrowth || 0}</p>
-          <p className="stat-label">This month</p>
+          <p className="stat-label">In filters</p>
         </div>
       </div>
 
@@ -244,14 +301,14 @@ function AnalyticsNew() {
               <div>Type</div>
               <div>Posts</div>
               <div>Avg Views</div>
-              <div>Avg Engagement</div>
+              <div>Avg Interaction</div>
             </div>
             {typeData.map((item, idx) => (
               <div key={idx} className="comp-row">
                 <div>{item.type}</div>
                 <div>{item.count}</div>
                 <div>{item.avgViews}</div>
-                <div>{item.avgEngagement}%</div>
+                <div>{item.avgInteraction}%</div>
               </div>
             ))}
           </div>
@@ -282,24 +339,64 @@ function AnalyticsNew() {
             value={newMetric.contentType}
             onChange={handleInputChange}
           >
-            <option>1-min Video</option>
-            <option>10-30sec Video</option>
-            <option>Static Post</option>
+            {CONTENT_TYPES.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
           </select>
+
+          <div style={{ gridColumn: 'span 3', fontSize: '13px', fontWeight: 'bold', color: '#667eea', marginTop: '10px' }}>
+            Views & Followers
+          </div>
           <input
             type="number"
-            name="views"
-            value={newMetric.views}
+            name="totalViews"
+            value={newMetric.totalViews}
             onChange={handleInputChange}
-            placeholder="Views"
+            placeholder="Total Views"
           />
           <input
             type="number"
-            name="engagement"
-            value={newMetric.engagement}
+            name="followersViews"
+            value={newMetric.followersViews}
             onChange={handleInputChange}
-            placeholder="Engagement"
+            placeholder="Followers Views"
           />
+          <input
+            type="number"
+            name="nonFollowersViews"
+            value={newMetric.nonFollowersViews}
+            onChange={handleInputChange}
+            placeholder="Non-Followers Views"
+          />
+
+          <div style={{ gridColumn: 'span 3', fontSize: '13px', fontWeight: 'bold', color: '#667eea', marginTop: '10px' }}>
+            Interaction Rate & Followers
+          </div>
+          <input
+            type="number"
+            name="interactionRate"
+            value={newMetric.interactionRate}
+            onChange={handleInputChange}
+            placeholder="Interaction Rate (%)"
+          />
+          <input
+            type="number"
+            name="followersInteraction"
+            value={newMetric.followersInteraction}
+            onChange={handleInputChange}
+            placeholder="Followers Interaction"
+          />
+          <input
+            type="number"
+            name="nonFollowersInteraction"
+            value={newMetric.nonFollowersInteraction}
+            onChange={handleInputChange}
+            placeholder="Non-Followers Interaction"
+          />
+
+          <div style={{ gridColumn: 'span 3', fontSize: '13px', fontWeight: 'bold', color: '#667eea', marginTop: '10px' }}>
+            Details
+          </div>
           <input
             type="number"
             name="likes"
@@ -320,13 +417,6 @@ function AnalyticsNew() {
             value={newMetric.shares}
             onChange={handleInputChange}
             placeholder="Shares"
-          />
-          <input
-            type="number"
-            name="followers_growth"
-            value={newMetric.followers_growth}
-            onChange={handleInputChange}
-            placeholder="Followers Growth"
           />
         </div>
         <div className="form-actions">
@@ -349,35 +439,41 @@ function AnalyticsNew() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Platform</th>
                 <th>Type</th>
-                <th>Views</th>
-                <th>Engagement</th>
+                <th>Platform</th>
+                <th>Total Views</th>
+                <th>Followers %</th>
+                <th>Non-Followers %</th>
+                <th>Interaction</th>
                 <th>Likes</th>
                 <th>Comments</th>
                 <th>Shares</th>
-                <th>Followers +</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {metrics.map(metric => (
-                <tr key={metric.id}>
-                  <td>{metric.postDate}</td>
-                  <td>{metric.platform}</td>
-                  <td>{metric.contentType}</td>
-                  <td><strong>{metric.views}</strong></td>
-                  <td><strong style={{ color: '#667eea' }}>{metric.engagement}</strong></td>
-                  <td>{metric.likes}</td>
-                  <td>{metric.comments}</td>
-                  <td>{metric.shares}</td>
-                  <td>+{metric.followers_growth}</td>
-                  <td className="actions-cell">
-                    <button className="btn-edit" onClick={() => handleEditMetric(metric)}>Edit</button>
-                    <button className="btn-delete" onClick={() => handleDeleteMetric(metric.id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+              {getFilteredMetrics().map(metric => {
+                const followersViewsPercent = metric.totalViews ? ((metric.followersViews / metric.totalViews) * 100).toFixed(1) : 0;
+                const nonFollowersViewsPercent = metric.totalViews ? ((metric.nonFollowersViews / metric.totalViews) * 100).toFixed(1) : 0;
+                return (
+                  <tr key={metric.id}>
+                    <td>{metric.postDate}</td>
+                    <td>{metric.contentType}</td>
+                    <td>{metric.platform}</td>
+                    <td><strong>{metric.totalViews}</strong></td>
+                    <td>{followersViewsPercent}%</td>
+                    <td>{nonFollowersViewsPercent}%</td>
+                    <td><strong style={{ color: '#667eea' }}>{metric.interactionRate}%</strong></td>
+                    <td>{metric.likes}</td>
+                    <td>{metric.comments}</td>
+                    <td>{metric.shares}</td>
+                    <td className="actions-cell">
+                      <button className="btn-edit" onClick={() => handleEditMetric(metric)}>Edit</button>
+                      <button className="btn-delete" onClick={() => handleDeleteMetric(metric.id)}>Delete</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
