@@ -334,6 +334,22 @@
   background-color: #d0d0d0;
 }
 
+/* Member Checkboxes */
+.member-checkboxes {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.member-checkboxes input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.member-checkboxes label {
+  font-weight: normal;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

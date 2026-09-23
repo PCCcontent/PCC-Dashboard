@@ -45,10 +45,10 @@ function CalendarNew() {
     platform: 'Instagram',
     contentType: '1-min Video',
     caption: '',
-    videoFileName: '',
+    videoTitle: '',
     videoLink: '',
     status: 'Content Planning',
-    assignedTo: '',
+    assignedTo: [],
     notes: ''
   });
 
@@ -97,17 +97,17 @@ function CalendarNew() {
       platform: 'Instagram',
       contentType: '1-min Video',
       caption: '',
-      videoFileName: '',
+      videoTitle: '',
       videoLink: '',
       status: 'Content Planning',
-      assignedTo: '',
+      assignedTo: [],
       notes: ''
     });
   };
 
   const handleSavePost = async () => {
-    if (!formData.date || !formData.caption) {
-      alert('Please fill in Date and Caption');
+    if (!formData.date) {
+      alert('Please fill in Date');
       return;
     }
 
@@ -156,6 +156,17 @@ function CalendarNew() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleToggleMember = (memberId) => {
+    setFormData(prev => {
+      const assignedTo = prev.assignedTo || [];
+      if (assignedTo.includes(memberId)) {
+        return { ...prev, assignedTo: assignedTo.filter(id => id !== memberId) };
+      } else {
+        return { ...prev, assignedTo: [...assignedTo, memberId] };
+      }
+    });
   };
 
   const getDaysInMonth = (date) => {
@@ -240,10 +251,10 @@ function CalendarNew() {
             />
             <input
               type="text"
-              name="videoFileName"
-              value={formData.videoFileName}
+              name="videoTitle"
+              value={formData.videoTitle}
               onChange={handleInputChange}
-              placeholder="Video File Name"
+              placeholder="Video Topic/Title"
             />
             <input
               type="url"
@@ -255,14 +266,22 @@ function CalendarNew() {
             <select name="status" value={formData.status} onChange={handleInputChange}>
               {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <select name="assignedTo" value={formData.assignedTo} onChange={handleInputChange}>
-              <option value="">-- Assign to Member --</option>
+            <div className="member-checkboxes">
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Assign to Members:</label>
               {teamMembers.map(member => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
+                <div key={member.id} style={{ marginBottom: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id={`member-${member.id}`}
+                    checked={formData.assignedTo?.includes(member.id) || false}
+                    onChange={() => handleToggleMember(member.id)}
+                  />
+                  <label htmlFor={`member-${member.id}`} style={{ marginLeft: '8px', cursor: 'pointer' }}>
+                    {member.name}
+                  </label>
+                </div>
               ))}
-            </select>
+            </div>
             <textarea
               name="notes"
               value={formData.notes}
@@ -314,24 +333,44 @@ function CalendarNew() {
                 {sectionPosts.map(post => (
                   <div key={post.id} className="post-card" style={{ borderLeftColor: STATUS_SECTIONS[post.status].color }}>
                     <div className="post-header">
+                      <h4>{post.videoTitle || 'Untitled'}</h4>
                       <span className="status-badge" style={{ backgroundColor: STATUS_SECTIONS[post.status].color }}>
                         {post.status}
                       </span>
-                      <span className="platform">{post.platform}</span>
+                    </div>
+                    <div className="post-meta">
+                      <span>{post.platform}</span>
+                      <span>{post.contentType}</span>
                     </div>
                     <div className="post-date">{post.date}</div>
-                    <div className="post-type">{post.contentType}</div>
-                    <div className="post-caption">
-                      <p>{post.caption}</p>
-                      <button
-                        className="copy-btn"
-                        onClick={() => handleCopyCaption(post.caption, post.id)}
-                        title="Copy caption"
-                      >
-                        {copiedId === post.id ? '✓ Copied!' : 'Copy'}
-                      </button>
+                    {post.caption && (
+                      <div className="post-caption">
+                        <p>{post.caption}</p>
+                        <button
+                          className="copy-btn"
+                          onClick={() => handleCopyCaption(post.caption, post.id)}
+                          title="Copy caption"
+                        >
+                          {copiedId === post.id ? '✓ Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    )}
+                    <div className="post-assigned">
+                      {Array.isArray(post.assignedTo) && post.assignedTo.length > 0 ? (
+                        <>
+                          <strong>Assigned:</strong> {post.assignedTo.map(id => {
+                            const member = teamMembers.find(m => m.id === id);
+                            return member?.name || 'Unknown';
+                          }).join(', ')}
+                        </>
+                      ) : post.assignedTo ? (
+                        <>
+                          <strong>Assigned:</strong> {teamMembers.find(m => m.id === post.assignedTo)?.name || 'Unknown'}
+                        </>
+                      ) : (
+                        <span style={{ color: '#ccc' }}>Not assigned</span>
+                      )}
                     </div>
-                    <div className="post-assigned">{post.assignedTo}</div>
                     <div className="post-actions">
                       <button className="btn-edit" onClick={() => handleEditPost(post)}>Edit</button>
                       <button className="btn-delete" onClick={() => handleDeletePost(post.id)}>Delete</button>

@@ -116,7 +116,13 @@ function TeamDashboard() {
   };
 
   const getTasksForMember = (memberId) => {
-    return tasks.filter(task => task.assignedTo === memberId);
+    return tasks.filter(task => {
+      // Handle both single assignedTo (string) and multiple assignedTo (array)
+      if (Array.isArray(task.assignedTo)) {
+        return task.assignedTo.includes(memberId);
+      }
+      return task.assignedTo === memberId;
+    });
   };
 
   const selectedMember = teamMembers.find(m => m.id === selectedMemberId);
@@ -246,7 +252,7 @@ function TeamDashboard() {
                 {selectedMemberTasks.map(task => (
                   <div key={task.id} className="task-card">
                     <div className="task-header">
-                      <h4>{task.caption?.substring(0, 50) || 'Untitled'}...</h4>
+                      <h4>{task.videoTitle || task.caption?.substring(0, 50) || 'Untitled'}</h4>
                       <span className="status-badge" data-status={task.status}>{task.status}</span>
                     </div>
                     <div className="task-meta">
