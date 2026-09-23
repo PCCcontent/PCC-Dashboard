@@ -63,6 +63,16 @@ function AnalyticsNew() {
 
   const CONTENT_TYPES = ['KOL', 'Reels', 'Short Reels', 'Static Post'];
 
+  const getContentTypeColor = (type) => {
+    const colors = {
+      'KOL': '#667eea',
+      'Reels': '#764ba2',
+      'Short Reels': '#f093fb',
+      'Static Post': '#4facfe'
+    };
+    return colors[type] || '#667eea';
+  };
+
   const handleAddMetric = () => {
     if (!newMetric.postDate || !newMetric.totalViews) {
       alert('Please fill in Post Date and Total Views');
@@ -254,7 +264,10 @@ function AnalyticsNew() {
                 <div className="bar-container">
                   <div
                     className="bar"
-                    style={{ height: `${(item.avgViews / Math.max(...typeData.map(d => d.avgViews)) * 100)}%` }}
+                    style={{
+                      height: `${(item.avgViews / Math.max(...typeData.map(d => d.avgViews)) * 100)}%`,
+                      background: getContentTypeColor(item.type)
+                    }}
                   ></div>
                 </div>
                 <div className="bar-label">
@@ -266,21 +279,21 @@ function AnalyticsNew() {
           </div>
         </div>
 
-        {/* Engagement by Platform Chart */}
+        {/* Interaction by Platform Chart */}
         <div className="chart-card">
-          <h3>👥 Avg Engagement by Platform</h3>
+          <h3>👥 Avg Interaction by Platform</h3>
           <div className="bar-chart">
             {platformData.map((item, idx) => (
               <div key={idx} className="chart-bar">
                 <div className="bar-container">
                   <div
-                    className="bar engagement-bar"
-                    style={{ height: `${(item.avgEngagement / Math.max(...platformData.map(d => d.avgEngagement)) * 100)}%` }}
+                    className="bar interaction-bar"
+                    style={{ height: `${(item.avgInteraction / Math.max(...platformData.map(d => d.avgInteraction)) * 100)}%` }}
                   ></div>
                 </div>
                 <div className="bar-label">
                   <div className="platform-name">{item.platform}</div>
-                  <div className="bar-value">{item.avgEngagement}%</div>
+                  <div className="bar-value">{item.avgInteraction}</div>
                 </div>
               </div>
             ))}

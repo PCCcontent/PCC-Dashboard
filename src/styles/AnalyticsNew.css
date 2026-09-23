@@ -168,7 +168,7 @@
   filter: brightness(1.1);
 }
 
-.bar.engagement-bar {
+.bar.interaction-bar {
   background: linear-gradient(to top, #4CAF50, #81C784);
 }
 
@@ -229,22 +229,24 @@
 /* Metrics Form Card */
 .metrics-form-card {
   background: white;
-  padding: 20px;
+  padding: 25px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 25px;
+  margin-bottom: 40px;
+  border-left: 5px solid #667eea;
 }
 
 .metrics-form-card h2 {
   color: #667eea;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  font-size: 18px;
 }
 
 .metrics-form-card .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .metrics-form-card input,
@@ -265,14 +267,17 @@
 /* Metrics Table */
 .metrics-table-card {
   background: white;
-  padding: 20px;
+  padding: 25px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 40px;
+  border-left: 5px solid #667eea;
 }
 
 .metrics-table-card h2 {
   color: #667eea;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  font-size: 18px;
 }
 
 .metrics-table {
