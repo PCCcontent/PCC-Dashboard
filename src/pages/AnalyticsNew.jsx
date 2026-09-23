@@ -53,12 +53,48 @@ function AnalyticsNew() {
     followers_growth: ''
   });
 
+  const [editingId, setEditingId] = useState(null);
+
   const handleAddMetric = () => {
     if (!newMetric.postDate || !newMetric.views) {
       alert('Please fill in Post Date and Views');
       return;
     }
-    setMetrics([...metrics, { ...newMetric, id: Date.now() }]);
+    if (editingId) {
+      // Update existing metric
+      setMetrics(metrics.map(m => m.id === editingId ? { ...newMetric, id: editingId } : m));
+      setEditingId(null);
+    } else {
+      // Add new metric
+      setMetrics([...metrics, { ...newMetric, id: Date.now() }]);
+    }
+    setNewMetric({
+      postDate: '',
+      platform: 'Instagram',
+      contentType: '1-min Video',
+      views: '',
+      engagement: '',
+      likes: '',
+      comments: '',
+      shares: '',
+      followers_growth: ''
+    });
+  };
+
+  const handleEditMetric = (metric) => {
+    setNewMetric(metric);
+    setEditingId(metric.id);
+    window.scrollTo(0, 0);
+  };
+
+  const handleDeleteMetric = (id) => {
+    if (window.confirm('Delete this metric?')) {
+      setMetrics(metrics.filter(m => m.id !== id));
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
     setNewMetric({
       postDate: '',
       platform: 'Instagram',
@@ -222,9 +258,9 @@ function AnalyticsNew() {
         </div>
       </div>
 
-      {/* Add Metrics */}
+      {/* Add/Edit Metrics */}
       <div className="metrics-form-card">
-        <h2>Add Post Metrics</h2>
+        <h2>{editingId ? 'Edit Metric' : 'Add Post Metrics'}</h2>
         <div className="form-grid">
           <input
             type="date"
@@ -293,7 +329,14 @@ function AnalyticsNew() {
             placeholder="Followers Growth"
           />
         </div>
-        <button className="btn-primary" onClick={handleAddMetric}>Add Metric</button>
+        <div className="form-actions">
+          <button className="btn-primary" onClick={handleAddMetric}>
+            {editingId ? 'Update Metric' : 'Add Metric'}
+          </button>
+          {editingId && (
+            <button className="btn-secondary" onClick={handleCancel}>Cancel</button>
+          )}
+        </div>
       </div>
 
       {/* Metrics Table */}
@@ -314,6 +357,7 @@ function AnalyticsNew() {
                 <th>Comments</th>
                 <th>Shares</th>
                 <th>Followers +</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -328,6 +372,10 @@ function AnalyticsNew() {
                   <td>{metric.comments}</td>
                   <td>{metric.shares}</td>
                   <td>+{metric.followers_growth}</td>
+                  <td className="actions-cell">
+                    <button className="btn-edit" onClick={() => handleEditMetric(metric)}>Edit</button>
+                    <button className="btn-delete" onClick={() => handleDeleteMetric(metric.id)}>Delete</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
