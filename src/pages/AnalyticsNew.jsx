@@ -9,11 +9,9 @@ function AnalyticsNew() {
       platform: 'Instagram',
       contentType: 'Reels',
       totalViews: 1234,
-      followersViews: 750,
-      nonFollowersViews: 484,
-      interactionRate: 45,
-      followersInteraction: 28,
-      nonFollowersInteraction: 17,
+      followersViewsRate: 60,
+      totalInteraction: 45,
+      followersInteractionRate: 62,
       likes: 30,
       comments: 8,
       shares: 5
@@ -24,11 +22,9 @@ function AnalyticsNew() {
       platform: 'Facebook',
       contentType: 'Static Post',
       totalViews: 890,
-      followersViews: 600,
-      nonFollowersViews: 290,
-      interactionRate: 28,
-      followersInteraction: 18,
-      nonFollowersInteraction: 10,
+      followersViewsRate: 67,
+      totalInteraction: 28,
+      followersInteractionRate: 64,
       likes: 20,
       comments: 5,
       shares: 3
@@ -39,11 +35,9 @@ function AnalyticsNew() {
       platform: 'Instagram',
       contentType: 'Short Reels',
       totalViews: 2100,
-      followersViews: 1260,
-      nonFollowersViews: 840,
-      interactionRate: 68,
-      followersInteraction: 45,
-      nonFollowersInteraction: 23,
+      followersViewsRate: 60,
+      totalInteraction: 85,
+      followersInteractionRate: 53,
       likes: 45,
       comments: 15,
       shares: 8
@@ -55,11 +49,9 @@ function AnalyticsNew() {
     platform: 'Instagram',
     contentType: 'Reels',
     totalViews: '',
-    followersViews: '',
-    nonFollowersViews: '',
-    interactionRate: '',
-    followersInteraction: '',
-    nonFollowersInteraction: '',
+    followersViewsRate: '',
+    totalInteraction: '',
+    followersInteractionRate: '',
     likes: '',
     comments: '',
     shares: ''
@@ -89,11 +81,9 @@ function AnalyticsNew() {
       platform: 'Instagram',
       contentType: 'Reels',
       totalViews: '',
-      followersViews: '',
-      nonFollowersViews: '',
-      interactionRate: '',
-      followersInteraction: '',
-      nonFollowersInteraction: '',
+      followersViewsRate: '',
+      totalInteraction: '',
+      followersInteractionRate: '',
       likes: '',
       comments: '',
       shares: ''
@@ -119,11 +109,9 @@ function AnalyticsNew() {
       platform: 'Instagram',
       contentType: 'Reels',
       totalViews: '',
-      followersViews: '',
-      nonFollowersViews: '',
-      interactionRate: '',
-      followersInteraction: '',
-      nonFollowersInteraction: '',
+      followersViewsRate: '',
+      totalInteraction: '',
+      followersInteractionRate: '',
       likes: '',
       comments: '',
       shares: ''
@@ -148,10 +136,11 @@ function AnalyticsNew() {
     const filtered = getFilteredMetrics();
     if (filtered.length === 0) return {};
     const totalViews = filtered.reduce((sum, m) => sum + parseInt(m.totalViews || 0), 0);
-    const avgInteractionRate = (filtered.reduce((sum, m) => sum + parseInt(m.interactionRate || 0), 0) / filtered.length).toFixed(1);
+    const totalInteraction = filtered.reduce((sum, m) => sum + parseInt(m.totalInteraction || 0), 0);
     const avgViews = (totalViews / filtered.length).toFixed(0);
+    const avgInteraction = (totalInteraction / filtered.length).toFixed(0);
 
-    return { totalViews, avgInteractionRate, postCount: filtered.length, avgViews };
+    return { totalViews, totalInteraction, avgInteraction, postCount: filtered.length, avgViews };
   };
 
   const getMetricsByType = () => {
@@ -161,12 +150,12 @@ function AnalyticsNew() {
       if (!types[m.contentType]) types[m.contentType] = { count: 0, totalViews: 0, totalInteraction: 0 };
       types[m.contentType].count++;
       types[m.contentType].totalViews += parseInt(m.totalViews || 0);
-      types[m.contentType].totalInteraction += parseInt(m.interactionRate || 0);
+      types[m.contentType].totalInteraction += parseInt(m.totalInteraction || 0);
     });
     return Object.entries(types).map(([type, data]) => ({
       type,
       avgViews: (data.totalViews / data.count).toFixed(0),
-      avgInteraction: (data.totalInteraction / data.count).toFixed(1),
+      avgInteraction: (data.totalInteraction / data.count).toFixed(0),
       count: data.count
     }));
   };
@@ -178,12 +167,12 @@ function AnalyticsNew() {
       if (!platforms[m.platform]) platforms[m.platform] = { count: 0, totalViews: 0, totalInteraction: 0 };
       platforms[m.platform].count++;
       platforms[m.platform].totalViews += parseInt(m.totalViews || 0);
-      platforms[m.platform].totalInteraction += parseInt(m.interactionRate || 0);
+      platforms[m.platform].totalInteraction += parseInt(m.totalInteraction || 0);
     });
     return Object.entries(platforms).map(([platform, data]) => ({
       platform,
       avgViews: (data.totalViews / data.count).toFixed(0),
-      avgInteraction: (data.totalInteraction / data.count).toFixed(1),
+      avgInteraction: (data.totalInteraction / data.count).toFixed(0),
       count: data.count
     }));
   };
@@ -238,8 +227,13 @@ function AnalyticsNew() {
           <p className="stat-label">Per post</p>
         </div>
         <div className="stat-card">
+          <h3>Total Interaction</h3>
+          <p className="stat-value">{stats.totalInteraction || 0}</p>
+          <p className="stat-label">All posts</p>
+        </div>
+        <div className="stat-card">
           <h3>Avg Interaction</h3>
-          <p className="stat-value">{stats.avgInteractionRate || 0}%</p>
+          <p className="stat-value">{stats.avgInteraction || 0}</p>
           <p className="stat-label">Per post</p>
         </div>
         <div className="stat-card">
@@ -356,42 +350,32 @@ function AnalyticsNew() {
           />
           <input
             type="number"
-            name="followersViews"
-            value={newMetric.followersViews}
+            name="followersViewsRate"
+            value={newMetric.followersViewsRate}
             onChange={handleInputChange}
-            placeholder="Followers Views"
-          />
-          <input
-            type="number"
-            name="nonFollowersViews"
-            value={newMetric.nonFollowersViews}
-            onChange={handleInputChange}
-            placeholder="Non-Followers Views"
+            placeholder="Followers Views Rate (%)"
+            min="0"
+            max="100"
           />
 
           <div style={{ gridColumn: 'span 3', fontSize: '13px', fontWeight: 'bold', color: '#667eea', marginTop: '10px' }}>
-            Interaction Rate & Followers
+            Interaction & Followers
           </div>
           <input
             type="number"
-            name="interactionRate"
-            value={newMetric.interactionRate}
+            name="totalInteraction"
+            value={newMetric.totalInteraction}
             onChange={handleInputChange}
-            placeholder="Interaction Rate (%)"
+            placeholder="Total Interaction (number)"
           />
           <input
             type="number"
-            name="followersInteraction"
-            value={newMetric.followersInteraction}
+            name="followersInteractionRate"
+            value={newMetric.followersInteractionRate}
             onChange={handleInputChange}
-            placeholder="Followers Interaction"
-          />
-          <input
-            type="number"
-            name="nonFollowersInteraction"
-            value={newMetric.nonFollowersInteraction}
-            onChange={handleInputChange}
-            placeholder="Non-Followers Interaction"
+            placeholder="Followers Interaction Rate (%)"
+            min="0"
+            max="100"
           />
 
           <div style={{ gridColumn: 'span 3', fontSize: '13px', fontWeight: 'bold', color: '#667eea', marginTop: '10px' }}>
@@ -442,31 +426,34 @@ function AnalyticsNew() {
                 <th>Type</th>
                 <th>Platform</th>
                 <th>Total Views</th>
-                <th>Followers %</th>
-                <th>Non-Followers %</th>
-                <th>Interaction</th>
+                <th>Followers Views</th>
+                <th>Non-Followers Views</th>
+                <th>Total Interaction</th>
+                <th>Followers Interaction</th>
+                <th>Non-Followers Interaction</th>
                 <th>Likes</th>
-                <th>Comments</th>
-                <th>Shares</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {getFilteredMetrics().map(metric => {
-                const followersViewsPercent = metric.totalViews ? ((metric.followersViews / metric.totalViews) * 100).toFixed(1) : 0;
-                const nonFollowersViewsPercent = metric.totalViews ? ((metric.nonFollowersViews / metric.totalViews) * 100).toFixed(1) : 0;
+                const followersViewsCount = (metric.totalViews * (metric.followersViewsRate / 100)).toFixed(0);
+                const nonFollowersViewsCount = (metric.totalViews - followersViewsCount).toFixed(0);
+                const followersInteractionCount = (metric.totalInteraction * (metric.followersInteractionRate / 100)).toFixed(0);
+                const nonFollowersInteractionCount = (metric.totalInteraction - followersInteractionCount).toFixed(0);
+
                 return (
                   <tr key={metric.id}>
                     <td>{metric.postDate}</td>
                     <td>{metric.contentType}</td>
                     <td>{metric.platform}</td>
                     <td><strong>{metric.totalViews}</strong></td>
-                    <td>{followersViewsPercent}%</td>
-                    <td>{nonFollowersViewsPercent}%</td>
-                    <td><strong style={{ color: '#667eea' }}>{metric.interactionRate}%</strong></td>
+                    <td>{metric.followersViewsRate}% ({followersViewsCount})</td>
+                    <td>{(100 - metric.followersViewsRate)}% ({nonFollowersViewsCount})</td>
+                    <td><strong style={{ color: '#667eea' }}>{metric.totalInteraction}</strong></td>
+                    <td>{metric.followersInteractionRate}% ({followersInteractionCount})</td>
+                    <td>{(100 - metric.followersInteractionRate)}% ({nonFollowersInteractionCount})</td>
                     <td>{metric.likes}</td>
-                    <td>{metric.comments}</td>
-                    <td>{metric.shares}</td>
                     <td className="actions-cell">
                       <button className="btn-edit" onClick={() => handleEditMetric(metric)}>Edit</button>
                       <button className="btn-delete" onClick={() => handleDeleteMetric(metric.id)}>Delete</button>
