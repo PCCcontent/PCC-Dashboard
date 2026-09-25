@@ -200,6 +200,19 @@
   font-size: 18px;
 }
 
+/* Completed Tasks Section */
+.completed-tasks-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.completed-tasks-section h3 {
+  color: #32CD32;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
 .tasks-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -296,6 +309,61 @@
   font-size: 12px;
   color: #888;
   gap: 10px;
+  margin-bottom: 10px;
+}
+
+.btn-done-task {
+  background-color: #32CD32;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background 0.2s ease;
+  width: 100%;
+}
+
+.btn-done-task:hover {
+  background-color: #28a745;
+}
+
+.task-card.completed {
+  background: #f0fff0;
+  opacity: 0.85;
+}
+
+.completed-badge {
+  background: #32CD32 !important;
+  color: white !important;
+}
+
+.task-card.overdue {
+  background: #ffebee;
+  border: 2px solid #d32f2f;
+}
+
+.task-card.overdue .task-header h4 {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.btn-undo-task {
+  background-color: #FFA500;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background 0.2s ease;
+  width: 100%;
+}
+
+.btn-undo-task:hover {
+  background-color: #ff8c00;
 }
 
 /* Buttons */

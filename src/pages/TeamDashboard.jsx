@@ -122,7 +122,49 @@ function TeamDashboard() {
         return task.assignedTo.includes(memberId);
       }
       return task.assignedTo === memberId;
-    });
+    }).filter(task => !task.isCompleted);
+  };
+
+  const getCompletedTasksForMember = (memberId) => {
+    return tasks.filter(task => {
+      // Handle both single assignedTo (string) and multiple assignedTo (array)
+      if (Array.isArray(task.assignedTo)) {
+        return task.assignedTo.includes(memberId);
+      }
+      return task.assignedTo === memberId;
+    }).filter(task => task.isCompleted);
+  };
+
+  const isOverdue = (taskDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(taskDate);
+    date.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  const handleMarkTaskComplete = async (taskId) => {
+    try {
+      await updateDoc(doc(db, 'posts', taskId), {
+        isCompleted: true,
+        completedAt: new Date()
+      });
+      await loadData();
+    } catch (err) {
+      setError('Failed to mark task complete: ' + err.message);
+    }
+  };
+
+  const handleUndoTaskComplete = async (taskId) => {
+    try {
+      await updateDoc(doc(db, 'posts', taskId), {
+        isCompleted: false,
+        completedAt: null
+      });
+      await loadData();
+    } catch (err) {
+      setError('Failed to undo task: ' + err.message);
+    }
   };
 
   const selectedMember = teamMembers.find(m => m.id === selectedMemberId);
@@ -249,16 +291,53 @@ function TeamDashboard() {
               <p className="empty-state">No tasks assigned yet</p>
             ) : (
               <div className="tasks-list">
-                {selectedMemberTasks.map(task => (
-                  <div key={task.id} className="task-card">
+                {selectedMemberTasks.map(task => {
+                  const assignedCount = Array.isArray(task.assignedTo) ? task.assignedTo.length : (task.assignedTo ? 1 : 0);
+                  const canMarkComplete = assignedCount === 1; // Only show Done button if assigned to 1 person
+                  const taskOverdue = isOverdue(task.scheduledDate?.toDate?.() || task.date);
+
+                  return (
+                    <div key={task.id} className={`task-card ${taskOverdue ? 'overdue' : ''}`} style={taskOverdue ? { borderLeftColor: '#d32f2f' } : {}}>
+                      {taskOverdue && <div style={{ color: '#d32f2f', fontSize: '11px', fontWeight: 'bold', marginBottom: '8px' }}>⚠ OVERDUE</div>}
+                      <div className="task-header">
+                        <h4 style={taskOverdue ? { color: '#d32f2f', fontWeight: 'bold' } : {}}>{task.videoTitle || task.caption?.substring(0, 50) || 'Untitled'}</h4>
+                        <span className="status-badge" data-status={task.status}>{task.status}</span>
+                      </div>
+                      <div className="task-meta">
+                        <span>{task.platform} • {task.contentType}</span>
+                        <span>{new Date(task.scheduledDate?.toDate?.() || task.date).toLocaleDateString()}</span>
+                      </div>
+                      {canMarkComplete && (
+                        <button className="btn-done-task" onClick={() => handleMarkTaskComplete(task.id)}>
+                          ✓ Mark Done
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="completed-tasks-section">
+            <h3>Completed Tasks ({getCompletedTasksForMember(selectedMemberId).length})</h3>
+            {getCompletedTasksForMember(selectedMemberId).length === 0 ? (
+              <p className="empty-state">No completed tasks yet</p>
+            ) : (
+              <div className="tasks-list">
+                {getCompletedTasksForMember(selectedMemberId).map(task => (
+                  <div key={task.id} className="task-card completed">
                     <div className="task-header">
                       <h4>{task.videoTitle || task.caption?.substring(0, 50) || 'Untitled'}</h4>
-                      <span className="status-badge" data-status={task.status}>{task.status}</span>
+                      <span className="status-badge completed-badge">✓ Completed</span>
                     </div>
                     <div className="task-meta">
                       <span>{task.platform} • {task.contentType}</span>
                       <span>{new Date(task.scheduledDate?.toDate?.() || task.date).toLocaleDateString()}</span>
                     </div>
+                    <button className="btn-undo-task" onClick={() => handleUndoTaskComplete(task.id)}>
+                      ↶ Undo
+                    </button>
                   </div>
                 ))}
               </div>

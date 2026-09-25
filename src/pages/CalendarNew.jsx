@@ -49,7 +49,9 @@ function CalendarNew() {
     videoLink: '',
     status: 'Content Planning',
     assignedTo: [],
-    notes: ''
+    notes: '',
+    isCompleted: false,
+    completedAt: null
   });
 
   const [copiedId, setCopiedId] = useState(null);
@@ -101,7 +103,9 @@ function CalendarNew() {
       videoLink: '',
       status: 'Content Planning',
       assignedTo: [],
-      notes: ''
+      notes: '',
+      isCompleted: false,
+      completedAt: null
     });
   };
 
@@ -153,9 +157,32 @@ function CalendarNew() {
     }
   };
 
+  const handleMarkComplete = async (id) => {
+    try {
+      await updatePost(id, {
+        isCompleted: true,
+        completedAt: new Date()
+      });
+      const updatedPosts = posts.map(p =>
+        p.id === id ? { ...p, isCompleted: true, completedAt: new Date() } : p
+      );
+      setPosts(updatedPosts);
+    } catch (err) {
+      alert('Error marking post complete: ' + err.message);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const isOverdue = (postDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const taskDate = new Date(postDate);
+    taskDate.setHours(0, 0, 0, 0);
+    return taskDate < today;
   };
 
   const handleToggleMember = (memberId) => {
@@ -179,7 +206,7 @@ function CalendarNew() {
 
   const getPostsForDate = (day) => {
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return posts.filter(p => p.date === dateStr);
+    return posts.filter(p => p.date === dateStr && !p.isCompleted);
   };
 
   const renderCalendarGrid = () => {
@@ -200,8 +227,11 @@ function CalendarNew() {
           <div className="day-number">{day}</div>
           <div className="day-posts">
             {dayPosts.map(post => (
-              <div key={post.id} className="post-indicator" style={{ backgroundColor: STATUS_SECTIONS[post.status].color }} title={post.platform}>
-                {post.contentType.charAt(0)}
+              <div key={post.id} className="post-item">
+                <div className="post-indicator" style={{ backgroundColor: STATUS_SECTIONS[post.status].color }} title={`${post.videoTitle || 'Untitled'} • ${post.platform}`}>
+                  {post.contentType.charAt(0)}
+                </div>
+                <div className="post-title-label">{post.videoTitle ? post.videoTitle.substring(0, 12) : 'Untitled'}</div>
               </div>
             ))}
           </div>
@@ -213,7 +243,7 @@ function CalendarNew() {
   };
 
   const getPostsBySection = (section) => {
-    return posts.filter(p => STATUS_SECTIONS[p.status]?.group === section);
+    return posts.filter(p => STATUS_SECTIONS[p.status]?.group === section && !p.isCompleted);
   };
 
   const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -331,7 +361,11 @@ function CalendarNew() {
               <h3>{section} ({sectionPosts.length})</h3>
               <div className="posts-grid">
                 {sectionPosts.map(post => (
-                  <div key={post.id} className="post-card" style={{ borderLeftColor: STATUS_SECTIONS[post.status].color }}>
+                  <div
+                    key={post.id}
+                    className={`post-card ${isOverdue(post.date) ? 'overdue' : ''}`}
+                    style={{ borderLeftColor: isOverdue(post.date) ? '#d32f2f' : STATUS_SECTIONS[post.status].color }}
+                  >
                     <div className="post-header">
                       <h4>{post.videoTitle || 'Untitled'}</h4>
                       <span className="status-badge" style={{ backgroundColor: STATUS_SECTIONS[post.status].color }}>
@@ -374,6 +408,7 @@ function CalendarNew() {
                     <div className="post-actions">
                       <button className="btn-edit" onClick={() => handleEditPost(post)}>Edit</button>
                       <button className="btn-delete" onClick={() => handleDeletePost(post.id)}>Delete</button>
+                      <button className="btn-done" onClick={() => handleMarkComplete(post.id)}>✓ Done</button>
                     </div>
                   </div>
                 ))}

@@ -134,25 +134,44 @@
 
 .day-posts {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 4px;
+  width: 100%;
+}
+
+.post-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
 }
 
 .post-indicator {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .post-indicator:hover {
   transform: scale(1.2);
+}
+
+.post-title-label {
+  font-size: 10px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 /* Posts by Section */
@@ -194,6 +213,25 @@
 .post-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-card.overdue {
+  background: #ffebee;
+  border: 2px solid #d32f2f;
+}
+
+.post-card.overdue .post-header h4 {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.post-card.overdue::before {
+  content: '⚠ OVERDUE';
+  display: block;
+  color: #d32f2f;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
 .post-header {
@@ -299,6 +337,22 @@
 
 .btn-delete:hover {
   background-color: #da190b;
+}
+
+.btn-done {
+  background-color: #32CD32;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+  font-weight: bold;
+}
+
+.btn-done:hover {
+  background-color: #28a745;
 }
 
 /* Buttons */
