@@ -44,6 +44,52 @@
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card.upcoming {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.upcoming .stat-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card.upcoming .stat-value {
+  color: white;
+}
+
+.stat-card.delayed {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.stat-card.delayed .stat-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card.delayed .stat-value {
+  color: white;
+}
+
+.stat-card.completed {
+  background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+}
+
+.stat-card.completed .stat-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-card.completed .stat-value {
+  color: white;
 }
 
 .stat-label {
@@ -90,8 +136,28 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.post-card.upcoming-post {
+  border-left: 4px solid #667eea;
+}
+
+.post-card.delayed-post {
+  border-left: 4px solid #ff6b6b;
+  background: #fff9f9;
+}
+
+.post-card.completed-post {
+  border-left: 4px solid #51cf66;
+  background: #f1fdf5;
+  opacity: 0.9;
+}
+
 .post-card.assigned {
   border-left: 4px solid #4CAF50;
+}
+
+.completed-badge {
+  background: #51cf66 !important;
+  color: white !important;
 }
 
 .post-header {

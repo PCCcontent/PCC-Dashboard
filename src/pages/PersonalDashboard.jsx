@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { getUserPosts, getUserAssignedPosts } from '../services/firestore.service';
+import { getTeamPosts } from '../services/firestore.service';
 import '../styles/PersonalDashboard.css';
 
 function PersonalDashboard() {
   const { currentUser, userProfile, teamId } = useAuth();
-  const [ownPosts, setOwnPosts] = useState([]);
-  const [assignedPosts, setAssignedPosts] = useState([]);
+  const [allTeamPosts, setAllTeamPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPosts = async () => {
-      if (!teamId || !currentUser) return;
+      if (!teamId) return;
 
       try {
-        const own = await getUserPosts(teamId, currentUser.uid);
-        const assigned = await getUserAssignedPosts(teamId, currentUser.uid);
-        setOwnPosts(own);
-        setAssignedPosts(assigned);
+        const posts = await getTeamPosts(teamId);
+        setAllTeamPosts(posts);
       } catch (error) {
         console.error('Error loading posts:', error);
       } finally {
@@ -26,9 +23,20 @@ function PersonalDashboard() {
     };
 
     loadPosts();
-  }, [teamId, currentUser]);
+  }, [teamId]);
 
-  const allPosts = [...ownPosts, ...assignedPosts];
+  // Categorize posts
+  const isOverdue = (taskDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(taskDate);
+    date.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  const upcomingPosts = allTeamPosts.filter(post => !post.isCompleted && !isOverdue(post.scheduledDate?.toDate?.() || post.date));
+  const overduePosts = allTeamPosts.filter(post => !post.isCompleted && isOverdue(post.scheduledDate?.toDate?.() || post.date));
+  const completedPosts = allTeamPosts.filter(post => post.isCompleted);
 
   return (
     <div className="dashboard-container">
@@ -42,17 +50,17 @@ function PersonalDashboard() {
       </div>
 
       <div className="dashboard-stats">
-        <div className="stat-card">
-          <div className="stat-label">My Posts</div>
-          <div className="stat-value">{ownPosts.length}</div>
+        <div className="stat-card upcoming">
+          <div className="stat-label">Upcoming Projects</div>
+          <div className="stat-value">{upcomingPosts.length}</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Assigned to Me</div>
-          <div className="stat-value">{assignedPosts.length}</div>
+        <div className="stat-card delayed">
+          <div className="stat-label">Delayed Projects</div>
+          <div className="stat-value">{overduePosts.length}</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Tasks</div>
-          <div className="stat-value">{allPosts.length}</div>
+        <div className="stat-card completed">
+          <div className="stat-label">Completed Projects</div>
+          <div className="stat-value">{completedPosts.length}</div>
         </div>
       </div>
 
@@ -60,45 +68,63 @@ function PersonalDashboard() {
         <p>Loading posts...</p>
       ) : (
         <>
-          {ownPosts.length > 0 && (
+          {upcomingPosts.length > 0 && (
             <div className="posts-section">
-              <h3>My Posts ({ownPosts.length})</h3>
+              <h3>Upcoming Projects ({upcomingPosts.length})</h3>
               <div className="posts-list">
-                {ownPosts.map(post => (
-                  <div key={post.id} className="post-card">
+                {upcomingPosts.map(post => (
+                  <div key={post.id} className="post-card upcoming-post">
                     <div className="post-header">
-                      <h4>{post.title}</h4>
+                      <h4>{post.videoTitle || post.caption?.substring(0, 50) || 'Untitled'}</h4>
                       <span className="status-badge" data-status={post.status}>{post.status}</span>
                     </div>
                     <p className="post-platform">{post.platform} • {post.contentType}</p>
-                    <p className="post-date">{new Date(post.scheduledDate).toLocaleDateString()}</p>
+                    <p className="post-date">{new Date(post.scheduledDate?.toDate?.() || post.date).toLocaleDateString()}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {assignedPosts.length > 0 && (
+          {overduePosts.length > 0 && (
             <div className="posts-section">
-              <h3>Assigned to Me ({assignedPosts.length})</h3>
+              <h3>Delayed Projects ({overduePosts.length})</h3>
               <div className="posts-list">
-                {assignedPosts.map(post => (
-                  <div key={post.id} className="post-card assigned">
+                {overduePosts.map(post => (
+                  <div key={post.id} className="post-card delayed-post">
                     <div className="post-header">
-                      <h4>{post.title}</h4>
+                      <h4>{post.videoTitle || post.caption?.substring(0, 50) || 'Untitled'}</h4>
                       <span className="status-badge" data-status={post.status}>{post.status}</span>
                     </div>
                     <p className="post-platform">{post.platform} • {post.contentType}</p>
-                    <p className="post-date">{new Date(post.scheduledDate).toLocaleDateString()}</p>
+                    <p className="post-date">{new Date(post.scheduledDate?.toDate?.() || post.date).toLocaleDateString()}</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {allPosts.length === 0 && (
+          {completedPosts.length > 0 && (
+            <div className="posts-section">
+              <h3>Completed Projects ({completedPosts.length})</h3>
+              <div className="posts-list">
+                {completedPosts.map(post => (
+                  <div key={post.id} className="post-card completed-post">
+                    <div className="post-header">
+                      <h4>{post.videoTitle || post.caption?.substring(0, 50) || 'Untitled'}</h4>
+                      <span className="status-badge completed-badge">✓ Completed</span>
+                    </div>
+                    <p className="post-platform">{post.platform} • {post.contentType}</p>
+                    <p className="post-date">{new Date(post.scheduledDate?.toDate?.() || post.date).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {allTeamPosts.length === 0 && (
             <div className="empty-state">
-              <p>No posts yet. Check back soon!</p>
+              <p>No projects yet. Check back soon!</p>
             </div>
           )}
         </>
