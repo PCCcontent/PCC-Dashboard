@@ -206,7 +206,7 @@ function CalendarNew() {
 
   const getPostsForDate = (day) => {
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return posts.filter(p => p.date === dateStr && !p.isCompleted);
+    return posts.filter(p => p.date === dateStr);
   };
 
   const renderCalendarGrid = () => {
@@ -227,9 +227,13 @@ function CalendarNew() {
           <div className="day-number">{day}</div>
           <div className="day-posts">
             {dayPosts.map(post => (
-              <div key={post.id} className="post-item">
-                <div className="post-indicator" style={{ backgroundColor: STATUS_SECTIONS[post.status].color }} title={`${post.videoTitle || 'Untitled'} • ${post.platform}`}>
-                  {post.contentType.charAt(0)}
+              <div key={post.id} className={`post-item ${post.isCompleted ? 'completed-item' : ''}`}>
+                <div
+                  className="post-indicator"
+                  style={{ backgroundColor: post.isCompleted ? '#32CD32' : STATUS_SECTIONS[post.status].color }}
+                  title={`${post.videoTitle || 'Untitled'} • ${post.platform}${post.isCompleted ? ' • Completed' : ''}`}
+                >
+                  {post.isCompleted ? '✓' : post.contentType.charAt(0)}
                 </div>
                 <div className="post-title-label">{post.videoTitle ? post.videoTitle.substring(0, 12) : 'Untitled'}</div>
               </div>

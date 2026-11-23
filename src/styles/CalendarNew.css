@@ -174,6 +174,15 @@
   flex: 1;
 }
 
+.post-item.completed-item {
+  opacity: 0.6;
+}
+
+.post-item.completed-item .post-title-label {
+  text-decoration: line-through;
+  color: #666;
+}
+
 /* Posts by Section */
 .posts-by-section {
   margin-top: 30px;
